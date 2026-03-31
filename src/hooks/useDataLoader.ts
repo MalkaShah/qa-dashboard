@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import { gitlabTickets, linearTickets, activityData } from '../data/sheetData'
+import { parseSheetData } from '../lib/parseSheet'
+import { gitlabTickets as fallbackGitlab, linearTickets as fallbackLinear, activityData as fallbackActivity } from '../data/sheetData'
 
 export type AppData = {
-  gitlab: typeof gitlabTickets
-  linear: typeof linearTickets
-  activity: typeof activityData
+  gitlab: { id: string; url: string; tool: string }[]
+  linear: { id: string; url: string; tool: string }[]
+  activity: { date: string; tool: string; workDone: string }[]
 }
 
+const SHEET_ID = '1ETrRr3oEyNJ3aQBGzw1Kf3GkHCJuGZFqe12bB81Lqi0'
 const REFRESH_INTERVAL = 5 * 60 * 1000 // 5 minutes
 
 export function useDataLoader() {
@@ -14,18 +16,28 @@ export function useDataLoader() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [isLive, setIsLive] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      // Simulated async load — swap for real API calls when ready
-      // e.g. fetch Google Sheets CSV + Linear GraphQL API
-      await new Promise<void>(resolve => setTimeout(resolve, 650))
-      setData({ gitlab: gitlabTickets, linear: linearTickets, activity: activityData })
+      const res = await fetch(
+        `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`,
+        { cache: 'no-store' }
+      )
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const csv = await res.text()
+      const parsed = parseSheetData(csv)
+      setData(parsed)
+      setIsLive(true)
       setLastUpdated(new Date())
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard data. Please refresh.')
+      console.warn('[QA Dashboard] Live sheet fetch failed, using fallback data:', err)
+      // Silently fall back to hardcoded data — no error banner shown
+      setData({ gitlab: fallbackGitlab, linear: fallbackLinear, activity: fallbackActivity })
+      setIsLive(false)
+      setLastUpdated(new Date())
     } finally {
       setLoading(false)
     }
@@ -37,5 +49,5 @@ export function useDataLoader() {
     return () => clearInterval(interval)
   }, [load])
 
-  return { data, loading, error, refresh: load, lastUpdated }
+  return { data, loading, error, refresh: load, lastUpdated, isLive }
 }

@@ -19,7 +19,7 @@ function RefreshIcon({ spinning }: { spinning: boolean }) {
 }
 
 function Dashboard() {
-  const { data, loading, error, refresh, lastUpdated } = useDataLoader()
+  const { data, loading, error, refresh, lastUpdated, isLive } = useDataLoader()
   const dateStr = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const total = data ? data.gitlab.length + data.linear.length : 0
 
@@ -107,8 +107,8 @@ function Dashboard() {
                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse-glow" />
                 <span className="text-indigo-300 text-xs font-medium">
                   {lastUpdated
-                    ? `Refreshed at ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                    : 'Live · Auto-refreshes every 5 min'}
+                    ? `${isLive ? 'Live' : 'Cached'} · Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : 'Connecting to Google Sheets…'}
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 shimmer-text px-4">
