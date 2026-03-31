@@ -32,7 +32,7 @@ function Dashboard() {
 
       {/* Sticky nav */}
       <header style={{ background: 'rgba(6,11,24,0.85)', borderBottom: '1px solid rgba(99,102,241,0.15)', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex items-center justify-between gap-2">
+        <div className="w-full px-4 sm:px-6 lg:px-10 py-3 flex items-center justify-between gap-2">
 
           {/* Logo + title */}
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -77,7 +77,7 @@ function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-6 sm:py-8" style={{ position: 'relative', zIndex: 1 }}>
+      <main className="w-full px-4 sm:px-6 lg:px-10 py-6 sm:py-8" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* Loading skeleton — only shown on first load (no data yet) */}
         {loading && !data && <SkeletonLoader />}
