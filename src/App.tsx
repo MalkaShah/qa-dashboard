@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import MetricCards from './components/MetricCards'
 import WeeklySchedule from './components/WeeklySchedule'
 import ActivityTable from './components/ActivityTable'
 import GitLabLinks from './components/GitLabLinks'
 import LinearTickets from './components/LinearTickets'
+import GhlTickets from './components/GhlTickets'
+import GhlHub from './components/GhlHub'
+import GhlReportModal from './components/GhlReportModal'
 import StatsBar from './components/StatsBar'
 import ToolBreakdown from './components/ToolBreakdown'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -20,6 +24,7 @@ function RefreshIcon({ spinning }: { spinning: boolean }) {
 
 function Dashboard() {
   const { data, loading, error, refresh, lastUpdated, isLive } = useDataLoader()
+  const [reportOpen, setReportOpen] = useState(false)
   const dateStr = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const total = data ? data.gitlab.length + data.linear.length : 0
 
@@ -53,6 +58,28 @@ function Dashboard() {
               </svg>
               {dateStr}
             </div>
+
+            {/* GHL Report button */}
+            <button onClick={() => setReportOpen(true)} title="View GHL Report"
+              style={{
+                background: 'rgba(124,58,237,0.12)',
+                border: '1px solid rgba(124,58,237,0.25)',
+                borderRadius: 8, padding: '6px 12px',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.22)'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.45)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.12)'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.25)' }}
+            >
+              <span style={{ fontSize: 13 }}>🏷️</span>
+              <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 600 }} className="hidden sm:inline">GHL Report</span>
+              {data?.ghlTickets?.length ? (
+                <span style={{ background: 'rgba(124,58,237,0.25)', color: '#c4b5fd', borderRadius: 100, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>
+                  {data.ghlTickets.length}
+                </span>
+              ) : null}
+            </button>
 
             {/* Manual refresh button */}
             <button onClick={refresh} disabled={loading} title="Refresh data"
@@ -123,6 +150,9 @@ function Dashboard() {
             {/* Metric cards */}
             <MetricCards gitlabCount={data.gitlab.length} linearCount={data.linear.length} />
 
+            {/* GHL Operations Hub */}
+            <GhlHub tickets={data.ghlTickets} activities={data.activity} />
+
             {/* Tool breakdown chart */}
             <ToolBreakdown gitlab={data.gitlab} linear={data.linear} />
 
@@ -135,6 +165,9 @@ function Dashboard() {
               <LinearTickets tickets={data.linear} />
             </div>
 
+            {/* GHL tickets full width */}
+            <GhlTickets tickets={data.ghlTickets} />
+
             {/* GitLab full width */}
             <GitLabLinks tickets={data.gitlab} />
 
@@ -144,6 +177,10 @@ function Dashboard() {
           </>
         )}
       </main>
+      {/* GHL Report modal */}
+      {reportOpen && data?.ghlTickets && (
+        <GhlReportModal tickets={data.ghlTickets} onClose={() => setReportOpen(false)} />
+      )}
     </div>
   )
 }
