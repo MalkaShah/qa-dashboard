@@ -1,5 +1,8 @@
 const PROXY = '/.netlify/functions/linear'
 
+type PageInfo = { hasNextPage: boolean; endCursor: string }
+type IssuesPage<T> = { nodes: T[]; pageInfo: PageInfo }
+
 const TEAM_KEY_TO_TOOL: Record<string, string> = {
   OTTO: 'OTTO SEO',
   SE: 'Site Explorer',
@@ -82,14 +85,14 @@ const GHL_QUERY = `
   }
 `
 
-async function runPagedQuery<T>(query: string, after?: string | null): Promise<{ nodes: T[]; pageInfo: { hasNextPage: boolean; endCursor: string } }> {
+async function runPagedQuery<T>(query: string, after?: string | null): Promise<IssuesPage<T>> {
   const res = await fetch(PROXY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables: { after: after ?? null } }),
   })
   if (!res.ok) throw new Error(`Linear proxy HTTP ${res.status}`)
-  const json = await res.json() as { error?: string; errors?: { message?: string }[]; data?: { issues?: { nodes: T[]; pageInfo: { hasNextPage: boolean; endCursor: string } } } }
+  const json = await res.json() as { error?: string; errors?: { message?: string }[]; data?: { issues?: IssuesPage<T> } }
   if (json.error) throw new Error(json.error)
   if (json.errors?.length) throw new Error(json.errors[0]?.message ?? 'Linear GraphQL error')
   const issues = json.data?.issues
@@ -102,9 +105,9 @@ async function fetchAllPages<T>(query: string): Promise<T[]> {
   let cursor: string | null = null
 
   do {
-    const { nodes, pageInfo } = await runPagedQuery<T>(query, cursor)
-    all.push(...nodes)
-    cursor = pageInfo.hasNextPage ? pageInfo.endCursor : null
+    const page: IssuesPage<T> = await runPagedQuery<T>(query, cursor)
+    all.push(...page.nodes)
+    cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null
   } while (cursor)
 
   return all
