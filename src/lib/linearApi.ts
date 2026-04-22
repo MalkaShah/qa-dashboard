@@ -1,4 +1,4 @@
-const LINEAR_API = 'https://api.linear.app/graphql'
+const PROXY = '/.netlify/functions/linear'
 
 const TEAM_KEY_TO_TOOL: Record<string, string> = {
   OTTO: 'OTTO SEO',
@@ -82,25 +82,25 @@ const GHL_QUERY = `
   }
 `
 
-async function runPagedQuery<T>(
-  apiKey: string,
-  userId: string,
-  query: string
-): Promise<T[]> {
+async function runPagedQuery<T>(query: string, after?: string | null): Promise<{ nodes: T[]; pageInfo: { hasNextPage: boolean; endCursor: string } }> {
+  const res = await fetch(PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables: { after: after ?? null } }),
+  })
+  if (!res.ok) throw new Error(`Linear proxy HTTP ${res.status}`)
+  const json = await res.json()
+  if (json.error) throw new Error(json.error)
+  if (json.errors?.length) throw new Error(json.errors[0]?.message ?? 'Linear GraphQL error')
+  return json.data.issues
+}
+
+async function fetchAllPages<T>(query: string): Promise<T[]> {
   const all: T[] = []
   let cursor: string | null = null
 
   do {
-    const res = await fetch(LINEAR_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: apiKey },
-      body: JSON.stringify({ query, variables: { userId, after: cursor } }),
-    })
-    if (!res.ok) throw new Error(`Linear API HTTP ${res.status}`)
-    const json = await res.json()
-    if (json.errors?.length) throw new Error(json.errors[0]?.message ?? 'Linear GraphQL error')
-
-    const { nodes, pageInfo } = json.data.issues
+    const { nodes, pageInfo } = await runPagedQuery<T>(query, cursor)
     all.push(...nodes)
     cursor = pageInfo.hasNextPage ? pageInfo.endCursor : null
   } while (cursor)
@@ -109,11 +109,7 @@ async function runPagedQuery<T>(
 }
 
 export async function fetchLinearTickets(): Promise<{ id: string; url: string; tool: string }[]> {
-  const apiKey = import.meta.env.VITE_LINEAR_API_KEY
-  const userId = import.meta.env.VITE_LINEAR_USER_ID
-  if (!apiKey || !userId) throw new Error('Linear env vars not configured')
-
-  const all = await runPagedQuery<LinearNode>(apiKey, userId, QUERY)
+  const all = await fetchAllPages<LinearNode>(QUERY)
   return all.map(n => ({
     id: n.identifier,
     url: n.url,
@@ -122,11 +118,7 @@ export async function fetchLinearTickets(): Promise<{ id: string; url: string; t
 }
 
 export async function fetchGhlTickets(): Promise<GhlTicket[]> {
-  const apiKey = import.meta.env.VITE_LINEAR_API_KEY
-  const userId = import.meta.env.VITE_LINEAR_USER_ID
-  if (!apiKey || !userId) throw new Error('Linear env vars not configured')
-
-  const all = await runPagedQuery<GhlNode>(apiKey, userId, GHL_QUERY)
+  const all = await fetchAllPages<GhlNode>(GHL_QUERY)
   return all.map(n => ({
     id: n.identifier,
     title: n.title,
