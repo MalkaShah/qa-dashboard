@@ -89,10 +89,12 @@ async function runPagedQuery<T>(query: string, after?: string | null): Promise<{
     body: JSON.stringify({ query, variables: { after: after ?? null } }),
   })
   if (!res.ok) throw new Error(`Linear proxy HTTP ${res.status}`)
-  const json = await res.json()
+  const json = await res.json() as { error?: string; errors?: { message?: string }[]; data?: { issues?: { nodes: T[]; pageInfo: { hasNextPage: boolean; endCursor: string } } } }
   if (json.error) throw new Error(json.error)
   if (json.errors?.length) throw new Error(json.errors[0]?.message ?? 'Linear GraphQL error')
-  return json.data.issues
+  const issues = json.data?.issues
+  if (!issues) throw new Error('No issues data in response')
+  return issues
 }
 
 async function fetchAllPages<T>(query: string): Promise<T[]> {
