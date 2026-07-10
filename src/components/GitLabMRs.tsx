@@ -70,7 +70,7 @@ function StatBadge({ label, count, active, onClick, color }: {
   )
 }
 
-export default function GitLabMRs({ mrs }: { mrs: GitLabMR[] }) {
+export default function GitLabMRs({ mrs, error }: { mrs: GitLabMR[]; error?: string | null }) {
   const [activeTab, setActiveTab] = useState<FilterTab>('All')
 
   const counts = {
@@ -272,7 +272,12 @@ export default function GitLabMRs({ mrs }: { mrs: GitLabMR[] }) {
           })}
         </div>
 
-        {filtered.length === 0 && (
+        {error && mrs.length === 0 && (
+          <div className="text-center py-8" style={{ color: '#f87171', fontSize: 13 }}>
+            ⚠️ Failed to load MRs: {error}
+          </div>
+        )}
+        {!error && filtered.length === 0 && (
           <div className="text-center py-8 text-slate-600 text-sm">
             No merge requests in this filter
           </div>

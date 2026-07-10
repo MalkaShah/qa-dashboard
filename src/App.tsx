@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import MetricCards from './components/MetricCards'
 import WeeklySchedule from './components/WeeklySchedule'
-import ActivityTable from './components/ActivityTable'
 import GitLabLinks from './components/GitLabLinks'
 import GitLabMRs from './components/GitLabMRs'
 import LinearTickets from './components/LinearTickets'
@@ -24,7 +23,7 @@ function RefreshIcon({ spinning }: { spinning: boolean }) {
 }
 
 function Dashboard() {
-  const { data, loading, error, refresh, lastUpdated, isLive } = useDataLoader()
+  const { data, loading, error, mrError, refresh, lastUpdated, isLive } = useDataLoader()
   const [reportOpen, setReportOpen] = useState(false)
   const dateStr = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const total = data ? data.gitlab.length + data.linear.length : 0
@@ -151,29 +150,26 @@ function Dashboard() {
             {/* Metric cards */}
             <MetricCards gitlabCount={data.gitlab.length} linearCount={data.linear.length} />
 
+            {/* Weekly schedule */}
+            <WeeklySchedule />
+
+            {/* GitLab Merge Requests */}
+            <GitLabMRs mrs={data.gitlabMRs} error={mrError} />
+
             {/* GHL Operations Hub */}
             <GhlHub tickets={data.ghlTickets} activities={data.activity} />
 
             {/* Tool breakdown chart */}
             <ToolBreakdown gitlab={data.gitlab} linear={data.linear} />
 
-            {/* Weekly schedule */}
-            <WeeklySchedule />
-
-            {/* Activity + Linear side by side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <ActivityTable data={data.activity} />
-              <LinearTickets tickets={data.linear} />
-            </div>
+            {/* Linear tickets */}
+            <LinearTickets tickets={data.linear} />
 
             {/* GHL tickets full width */}
             <GhlTickets tickets={data.ghlTickets} />
 
             {/* GitLab full width */}
             <GitLabLinks tickets={data.gitlab} />
-
-            {/* GitLab Merge Requests */}
-            <GitLabMRs mrs={data.gitlabMRs} />
 
             <div className="mt-8 sm:mt-10 text-center text-slate-700 text-xs pb-6">
               Data sourced from Google Sheets · Linear API · GitLab API · Built with React + Vite

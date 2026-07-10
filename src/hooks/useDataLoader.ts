@@ -23,12 +23,14 @@ export function useDataLoader() {
   const [data, setData] = useState<AppData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [mrError, setMrError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isLive, setIsLive] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
+    setMrError(null)
 
     const [sheetResult, linearResult, ghlResult, mrResult] = await Promise.allSettled([
       fetch(
@@ -48,8 +50,11 @@ export function useDataLoader() {
       console.warn('[QA Dashboard] Linear fetch failed:', (linearResult as PromiseRejectedResult).reason)
     if (ghlResult.status === 'rejected')
       console.warn('[QA Dashboard] GHL fetch failed:', (ghlResult as PromiseRejectedResult).reason)
-    if (mrResult.status === 'rejected')
-      console.warn('[QA Dashboard] GitLab MR fetch failed:', (mrResult as PromiseRejectedResult).reason)
+    if (mrResult.status === 'rejected') {
+      const reason = (mrResult as PromiseRejectedResult).reason
+      console.warn('[QA Dashboard] GitLab MR fetch failed:', reason)
+      setMrError(reason instanceof Error ? reason.message : String(reason))
+    }
 
     const sheet = sheetResult.status === 'fulfilled' ? sheetResult.value : null
     const linear = linearResult.status === 'fulfilled' ? linearResult.value : fallbackLinear
@@ -74,5 +79,5 @@ export function useDataLoader() {
     return () => clearInterval(interval)
   }, [load])
 
-  return { data, loading, error, refresh: load, lastUpdated, isLive }
+  return { data, loading, error, mrError, refresh: load, lastUpdated, isLive }
 }
