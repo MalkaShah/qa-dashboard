@@ -56,24 +56,6 @@ export default function WeeklySchedule() {
         )}
       </div>
 
-      {/* Today's callout */}
-      {today && (
-        <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.1))', border: '1px solid rgba(99,102,241,0.25)' }}
-          className="rounded-xl p-3 sm:p-4 mb-4 sm:mb-5 flex items-center gap-3 sm:gap-4">
-          <div style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', boxShadow: '0 0 20px rgba(99,102,241,0.4)', flexShrink: 0 }}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-base sm:text-lg">🎯</div>
-          <div>
-            <p className="text-indigo-300 text-xs font-medium mb-1">TODAY'S TESTING TOOLS</p>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {SCHEDULE[today.name]?.map(tool => (
-                <span key={tool} style={{ background: 'rgba(99,102,241,0.25)', border: '1px solid rgba(99,102,241,0.4)' }}
-                  className="text-indigo-100 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 rounded-lg">{tool}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 5-day grid — horizontally scrollable on small screens */}
       <div className="relative">
         {/* Right fade hint on mobile */}
