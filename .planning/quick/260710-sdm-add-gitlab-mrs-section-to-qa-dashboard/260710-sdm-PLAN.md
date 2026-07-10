@@ -110,7 +110,7 @@ className="rounded-2xl p-4 sm:p-6"
 Append to `.env.local` (do NOT prefix with VITE_):
 ```
 # Server-side only (used by Netlify function, NOT exposed to browser)
-GITLAB_TOKEN=glpat-JZW5ESfR9C0SnCr0SwO3wmM6MQpvOjEKdTptaWV1bg8.01.170jb5cwt
+GITLAB_TOKEN=<your-gitlab-personal-access-token>
 ```
 
 **Step B — Create `netlify/functions/gitlab-mrs.ts`**
