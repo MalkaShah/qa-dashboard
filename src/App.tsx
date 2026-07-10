@@ -3,6 +3,7 @@ import MetricCards from './components/MetricCards'
 import WeeklySchedule from './components/WeeklySchedule'
 import ActivityTable from './components/ActivityTable'
 import GitLabLinks from './components/GitLabLinks'
+import GitLabMRs from './components/GitLabMRs'
 import LinearTickets from './components/LinearTickets'
 import GhlTickets from './components/GhlTickets'
 import GhlHub from './components/GhlHub'
@@ -171,8 +172,11 @@ function Dashboard() {
             {/* GitLab full width */}
             <GitLabLinks tickets={data.gitlab} />
 
+            {/* GitLab Merge Requests */}
+            <GitLabMRs mrs={data.gitlabMRs} />
+
             <div className="mt-8 sm:mt-10 text-center text-slate-700 text-xs pb-6">
-              Data sourced from Google Sheets · Linear API · Built with React + Vite
+              Data sourced from Google Sheets · Linear API · GitLab API · Built with React + Vite
             </div>
           </>
         )}

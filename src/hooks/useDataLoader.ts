@@ -2,15 +2,18 @@ import { useState, useEffect, useCallback } from 'react'
 import { parseSheetData } from '../lib/parseSheet'
 import { fetchLinearTickets, fetchGhlTickets } from '../lib/linearApi'
 import type { GhlTicket } from '../lib/linearApi'
+import { fetchGitLabMRs } from '../lib/gitlabApi'
+import type { GitLabMR } from '../lib/gitlabApi'
 import { gitlabTickets as fallbackGitlab, linearTickets as fallbackLinear, activityData as fallbackActivity } from '../data/sheetData'
 
-export type { GhlTicket }
+export type { GhlTicket, GitLabMR }
 
 export type AppData = {
   gitlab: { id: string; url: string; tool: string }[]
   linear: { id: string; url: string; tool: string }[]
   activity: { date: string; tool: string; workDone: string }[]
   ghlTickets: GhlTicket[]
+  gitlabMRs: GitLabMR[]
 }
 
 const SHEET_ID = import.meta.env.VITE_GOOGLE_SHEET_ID || '1ETrRr3oEyNJ3aQBGzw1Kf3GkHCJuGZFqe12bB81Lqi0'
@@ -27,7 +30,7 @@ export function useDataLoader() {
     setLoading(true)
     setError(null)
 
-    const [sheetResult, linearResult, ghlResult] = await Promise.allSettled([
+    const [sheetResult, linearResult, ghlResult, mrResult] = await Promise.allSettled([
       fetch(
         `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`,
         { cache: 'no-store' }
@@ -36,6 +39,7 @@ export function useDataLoader() {
         .then(csv => parseSheetData(csv)),
       fetchLinearTickets(),
       fetchGhlTickets(),
+      fetchGitLabMRs(),
     ])
 
     if (sheetResult.status === 'rejected')
@@ -44,16 +48,20 @@ export function useDataLoader() {
       console.warn('[QA Dashboard] Linear fetch failed:', (linearResult as PromiseRejectedResult).reason)
     if (ghlResult.status === 'rejected')
       console.warn('[QA Dashboard] GHL fetch failed:', (ghlResult as PromiseRejectedResult).reason)
+    if (mrResult.status === 'rejected')
+      console.warn('[QA Dashboard] GitLab MR fetch failed:', (mrResult as PromiseRejectedResult).reason)
 
     const sheet = sheetResult.status === 'fulfilled' ? sheetResult.value : null
     const linear = linearResult.status === 'fulfilled' ? linearResult.value : fallbackLinear
     const ghlTickets = ghlResult.status === 'fulfilled' ? ghlResult.value : []
+    const gitlabMRs = mrResult.status === 'fulfilled' ? mrResult.value : []
 
     setData({
       gitlab: sheet?.gitlab ?? fallbackGitlab,
       linear,
       activity: sheet?.activity ?? fallbackActivity,
       ghlTickets,
+      gitlabMRs,
     })
     setIsLive(sheetResult.status === 'fulfilled' || linearResult.status === 'fulfilled')
     setLastUpdated(new Date())
